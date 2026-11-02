@@ -21,7 +21,7 @@ main{max-width:980px;margin:0 auto;padding:18px 14px 60px}
 h1{font-size:clamp(28px,6vw,44px);line-height:1.15;margin:.3em 0}h2{margin:.2em 0 .5em}
 label{display:block;font-size:14px;color:var(--mu);margin:10px 0 4px}
 input,select,textarea{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--br);background:var(--bg);color:var(--tx)}
-textarea{min-height:90px}.mu{color:var(--mu);font-size:14px}.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--br);color:var(--wn)}
+textarea{min-height:90px}input[type=color]{height:52px;padding:4px;cursor:pointer}.mu{color:var(--mu);font-size:14px}.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--br);color:var(--wn)}
 .note{border-left:4px solid var(--wn);padding:8px 12px;background:var(--bg);border-radius:8px;font-size:14px;margin:10px 0}
 .res{white-space:pre-wrap;border:1px dashed var(--br);border-radius:12px;padding:12px;margin-top:8px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.v{display:none}.v.on{display:block}
@@ -119,7 +119,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const CL=typeof claude!=='undefined'?claude:null;let sample=null,SRV=false;
 if(CL)CL.use('sample').then(s=>sample=s).catch(()=>{});
 fetch('/api/health').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ai)SRV=true}).catch(()=>{});
-async function ai(prompt,on){if(SRV){const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:r.status===429?'rate_limited':'err',message:j.error||''};on(j.text);return{text:j.text}}return sample(prompt,{cache:false,onText:({text})=>on(text)})}
+async function ai(prompt,on){if(SRV){const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:r.status===429?'rate_limited':'err',message:j.error||''};const t=j.text.replace(/\*\*/g,'');on(t);return{text:t}}return sample(prompt,{cache:false,onText:({text})=>on(text)})}
 async function useDl(){if(CL){const d=await CL.use('downloads');if(d)return d}return{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(data);a.download=filename;document.body.appendChild(a);a.click();a.remove()}}}
 function quota(){const t=new Date().toISOString().slice(0,10),q=S.get('kq',{});return q.d===t?q:{d:t,n:0}}
 function noAI(el){el.hidden=false;el.textContent='IA non activée : aucun serveur d’IA n’est connecté à ce site. Suivez le guide LISEZMOI du dossier de déploiement (clé Gemini gratuite + Cloudflare Pages).'}
@@ -136,10 +136,10 @@ async function run(btn,msg,out,prompt,cat,meta){
 function genT(){const v=i=>$(i).value.trim();if(!v('t_act')||!v('t_prod')){alert('Renseignez au moins l’activité et le produit.');return}
  run($('t_go'),$('t_msg'),$('t_out'),`Tu es rédacteur publicitaire. Langue : ${v('t_lang')}. Ton : ${v('t_ton')}. Réseau : ${$('t_net').value}.
 Activité : ${v('t_act')}. Produit/service : ${v('t_prod')}. Public : ${v('t_pub')}. Objectif : ${v('t_obj')}. Infos promo fournies : ${v('t_promo')||'aucune'}.
-N’invente AUCUN prix, remise, date, chiffre ni témoignage ; utilise uniquement les infos fournies. Réponds en texte simple avec ces rubriques : TITRE, TEXTE PRINCIPAL, DESCRIPTION COURTE, APPEL À L’ACTION, VERSION COURTE, VERSION LONGUE.`,'Texte',v('t_prod'))}
+RÈGLES STRICTES : n’invente AUCUN prix, remise, date, chiffre, nombre de clients ou d’utilisateurs, ancienneté, avis, label ni garantie. N’écris pas « des milliers de clients » ou équivalent. Utilise uniquement les infos fournies ci-dessus et reste général sinon. N’utilise aucun astérisque ni markdown. Réponds en texte simple avec ces rubriques : TITRE, TEXTE PRINCIPAL, DESCRIPTION COURTE, APPEL À L’ACTION, VERSION COURTE, VERSION LONGUE.`,'Texte',v('t_prod'))}
 function genC(){const v=i=>$(i).value.trim();if(!v('c_su')){alert('Indiquez un sujet.');return}
  run($('c_go'),$('c_msg'),$('c_out'),`Tu es community manager. Tâche : ${v('c_ty')}. Sujet : ${v('c_su')}. Public : ${v('c_pu')}. Langue : ${v('c_la')}. Ton : ${v('c_to')}.
-N’invente aucun prix, chiffre, date ni témoignage. Réponds en texte simple, prêt à copier.`,'Contenu',v('c_su').slice(0,40))}
+RÈGLES STRICTES : n’invente aucun prix, chiffre, nombre de clients, date, avis ni garantie. Utilise seulement les infos fournies. N’utilise aucun astérisque ni markdown. Réponds en texte simple, prêt à copier.`,'Contenu',v('c_su').slice(0,40))}
 function cp(id){const t=$(id).innerText;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>alert('Copié.')).catch(()=>{const r=document.createRange();r.selectNodeContents($(id));const s=getSelection();s.removeAllRanges();s.addRange(r);alert('Sélectionné : faites Copier manuellement.')})}
 function lib(){return S.get('klib',[])}
 function add(it){const l=lib();if(l.length>=LIM.library_max){alert('Bibliothèque pleine ('+LIM.library_max+'). Supprimez un projet.');return}l.unshift({id:Date.now(),date:new Date().toLocaleDateString('fr-FR'),...it});if(S.set('klib',l))alert('Enregistré sur cet appareil.');else alert('Échec : stockage du navigateur indisponible, rien n’a été enregistré.')}
