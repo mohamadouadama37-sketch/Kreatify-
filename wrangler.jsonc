@@ -2,5 +2,6 @@
   "name": "kreatify",
   "main": "worker.js",
   "compatibility_date": "2025-01-01",
-  "assets": { "directory": "./" }
+  "assets": { "directory": "./" },
+  "vars": { "AI_MODEL": "openai/gpt-oss-120b" }
 }
