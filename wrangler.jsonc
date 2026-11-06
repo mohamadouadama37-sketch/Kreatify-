@@ -3,5 +3,9 @@
   "main": "worker.js",
   "compatibility_date": "2025-01-01",
   "assets": { "directory": "./" },
-  "vars": { "AI_MODEL": "openai/gpt-oss-120b" }
+  "vars": { "AI_MODEL": "openai/gpt-oss-120b" },
+  "ratelimits": [
+    { "name": "IP_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } },
+    { "name": "GLOBAL_LIMITER", "namespace_id": "1002", "simple": { "limit": 40, "period": 60 } }
+  ]
 }
