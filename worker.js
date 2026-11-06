@@ -1,5 +1,5 @@
 const PROVIDERS = [
-  { key: "GROQ_API_KEY", url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" },
+  { key: "GROQ_API_KEY", url: "https://api.groq.com/openai/v1/chat/completions", model: "openai/gpt-oss-120b" },
   { key: "MISTRAL_API_KEY", url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest" },
   { key: "OPENROUTER_API_KEY", url: "https://openrouter.ai/api/v1/chat/completions", model: "" },
 ];
@@ -11,6 +11,19 @@ export default {
     const p = PROVIDERS.find(x => env[x.key]);
     if (url.pathname === "/api/health") return json({ ai: Boolean(p) });
     if (url.pathname === "/api/generate" && request.method === "POST") {
+      const origin = request.headers.get("Origin");
+      if (origin) {
+        let ok = false;
+        try { ok = new URL(origin).host === url.host; } catch {}
+        if (!ok) return json({ error: "Origine refusée." }, 403);
+      }
+      const ip = request.headers.get("CF-Connecting-IP") || "inconnue";
+      try {
+        if (env.IP_LIMITER && !(await env.IP_LIMITER.limit({ key: ip })).success)
+          return json({ error: "Trop de requêtes, patientez une minute." }, 429);
+        if (env.GLOBAL_LIMITER && !(await env.GLOBAL_LIMITER.limit({ key: "global" })).success)
+          return json({ error: "Service très sollicité, réessayez dans une minute." }, 429);
+      } catch {}
       if (!p) return json({ error: "IA non configurée." }, 503);
       let prompt;
       try { ({ prompt } = await request.json()); } catch { return json({ error: "Requête invalide." }, 400); }
