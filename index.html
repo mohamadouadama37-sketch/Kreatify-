@@ -37,7 +37,7 @@ canvas,svg.lg{max-width:100%;height:auto;border-radius:12px;border:1px solid var
 <h1>Créez des publicités professionnelles avec l’IA.</h1>
 <p>Transformez vos idées en textes publicitaires, concepts de logos et visuels adaptés à votre activité.</p>
 <div class="row"><button class="btn p" onclick="go('textes')">Commencer gratuitement</button><button class="btn" onclick="go('outils')">Découvrir les fonctionnalités</button></div>
-<div class="note"><b>Limites de l’offre gratuite (réelles) :</b> <span id="lim"></span> Les quotas sont comptés dans votre navigateur : ils servent de garde-fou de test, pas de protection serveur. Les générations IA dépendent du quota de la plateforme d’hébergement.</div>
+<div class="note"><b>Limites de l’offre gratuite (réelles) :</b> <span id="lim"></span> La génération par IA demande un compte gratuit ; la limite quotidienne est contrôlée par le serveur. Les générations IA dépendent du quota de la plateforme d’hébergement.</div>
 <h2 id="outils">Outils</h2>
 <div class="grid">
 <div class="card"><b>Textes publicitaires</b><p class="mu">Titre, texte, description, appel à l’action, versions courte et longue. IA réelle.</p><button class="btn" onclick="go('textes')">Ouvrir</button></div>
@@ -51,7 +51,7 @@ canvas,svg.lg{max-width:100%;height:auto;border-radius:12px;border:1px solid var
 <details><summary>Les logos sont-ils libres de droits ?</summary><p class="mu">Ce sont des concepts. Aucune garantie d’originalité juridique : faites vérifier avant tout usage commercial.</p></details>
 <details><summary>Comptes, paiements, administration ?</summary><p class="mu">En préparation, non actifs. Voir l’onglet Tarifs et la documentation.</p></details>
 <h2>Contact, conditions, confidentialité</h2>
-<p class="mu"><b>Contact :</b> e-mail <a href="mailto:mohamadouadama37@gmail.com" style="color:var(--pr)">mohamadouadama37@gmail.com</a> · téléphone <a href="tel:+237651092316" style="color:var(--pr)">+237 651 09 23 16</a>. <b>Conditions :</b> service fourni « en l’état » en phase de test ; vous restez responsable de l’usage des contenus. <b>Confidentialité :</b> les champs saisis dans les outils IA sont envoyés au service d’IA pour produire le résultat ; les projets sauvegardés restent dans votre navigateur. Textes provisoires, à faire valider juridiquement.</p>
+<p class="mu"><b>Contact :</b> e-mail <a href="mailto:mohamadouadama37@gmail.com" style="color:var(--pr)">mohamadouadama37@gmail.com</a> · téléphone <a href="tel:+237651092316" style="color:var(--pr)">+237 651 09 23 16</a>. <b>Conditions :</b> service fourni « en l’état » en phase de test ; vous restez responsable de l’usage des contenus. <b>Confidentialité :</b> les champs saisis dans les outils IA sont envoyés au service d’IA pour produire le résultat ; si vous créez un compte, votre e-mail et un mot de passe haché sont conservés ; les projets sauvegardés restent dans votre navigateur. Textes provisoires, à faire valider juridiquement.</p>
 </section>
 
 <section id="textes" class="v"><h2>Générateur de textes publicitaires</h2><div class="card">
@@ -102,9 +102,14 @@ canvas,svg.lg{max-width:100%;height:auto;border-radius:12px;border:1px solid var
 <div class="card"><b>Pro — 12,99 EUR/mois</b><p class="mu">Quotas supérieurs, organisation de projets. <span class="tag">Non activé</span></p></div></div>
 <div class="note">Paiements désactivés : aucun prestataire configuré, aucune fonction premium opérationnelle. Crédits d’utilisation : en préparation. Aucune donnée de carte n’est collectée.</div></section>
 
-<section id="compte" class="v"><h2>Compte, crédits, administration</h2><div class="card">
-<p>Inscription, connexion, récupération de mot de passe, suppression de compte, crédits et espace administrateur nécessitent un <b>serveur et une base de données</b> qu’une page statique ne peut pas fournir de façon sûre. <span class="tag">En préparation — non actif</span></p>
-<p class="mu">Ces fonctions seront ajoutées plus tard. En attendant, aucun compte n’est nécessaire : vos projets restent sur votre appareil.</p></div></section>
+<section id="compte" class="v"><h2>Mon compte</h2><div class="card">
+<div id="acc_in" hidden><p>Connecté : <b id="acc_mail"></b></p><p class="mu" id="acc_use"></p>
+<div class="row"><button class="btn" onclick="doLogout()">Se déconnecter</button></div>
+<label>Supprimer mon compte (entrez votre mot de passe)</label><input type="password" id="acc_del" autocomplete="current-password"><div class="row"><button class="btn" onclick="doDelete()">Supprimer définitivement</button></div></div>
+<div id="acc_form"><label>E-mail</label><input type="email" id="acc_e" autocomplete="email"><label>Mot de passe (8 caractères minimum)</label><input type="password" id="acc_p" autocomplete="current-password">
+<div class="row"><button class="btn p" onclick="doAuth('login')">Se connecter</button><button class="btn" onclick="doAuth('register')">Créer un compte gratuit</button></div></div>
+<div class="note" id="acc_msg" hidden></div>
+<p class="mu">Un compte gratuit est nécessaire pour la génération par IA. Vos projets de la bibliothèque restent sur cet appareil. Récupération de mot de passe, crédits, paiements et administration : <span class="tag">non actifs</span> (écrivez-nous via l’accueil en cas de perte de mot de passe).</p></div></section>
 </main>
 <script>
 const $=id=>document.getElementById(id),LIM={free_text_per_day:5,library_max:20};
@@ -119,19 +124,19 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const CL=typeof claude!=='undefined'?claude:null;let sample=null,SRV=false;
 if(CL)CL.use('sample').then(s=>sample=s).catch(()=>{});
 fetch('/api/health').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ai)SRV=true}).catch(()=>{});
-async function ai(prompt,on){if(SRV){const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:r.status===429?'rate_limited':'err',message:j.error||''};const t=j.text.replace(/\*\*/g,'').replace(/^#+\s*/gm,'').replace(/^-{3,}\s*$/gm,'');on(t);return{text:t}}return sample(prompt,{cache:false,onText:({text})=>on(text)})}
+async function ai(prompt,on){if(SRV){const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:r.status===401?'auth':r.status===429?'quota':'err',message:j.error||''};const t=j.text.replace(/\*\*/g,'').replace(/^#+\s*/gm,'').replace(/^-{3,}\s*$/gm,'');on(t);return{text:t,used:j.used,limit:j.limit}}return sample(prompt,{cache:false,onText:({text})=>on(text)})}
 async function useDl(){if(CL){const d=await CL.use('downloads');if(d)return d}return{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(data);a.download=filename;document.body.appendChild(a);a.click();a.remove()}}}
 function quota(){const t=new Date().toISOString().slice(0,10),q=S.get('kq',{});return q.d===t?q:{d:t,n:0}}
 function noAI(el){el.hidden=false;el.textContent='IA non activée : aucun serveur d’IA n’est connecté à ce site. Suivez le guide LISEZMOI du dossier de déploiement (clé Gemini gratuite + Cloudflare Pages).'}
 async function run(btn,msg,out,prompt,cat,meta){
   msg.hidden=true;
   if(!sample&&!SRV){noAI(msg);return}
-  const q=quota();if(q.n>=LIM.free_text_per_day){msg.hidden=false;msg.textContent='Limite gratuite atteinte ('+LIM.free_text_per_day+'/jour). Revenez demain.';return}
+  const q=quota();if(!SRV&&q.n>=LIM.free_text_per_day){msg.hidden=false;msg.textContent='Limite gratuite atteinte ('+LIM.free_text_per_day+'/jour). Revenez demain.';return}
   btn.disabled=true;btn.textContent='Génération…';out.innerHTML='';
   try{const r=await ai(prompt,t=>{out.innerHTML=`<div class="res">${esc(t)}</div>`});
     q.n++;S.set('kq',q);
-    out.innerHTML=`<div class="res" id="${out.id}_r" contenteditable="true">${esc(r.text)}</div><div class="row"><button class="btn" onclick="cp('${out.id}_r')">Copier</button><button class="btn" onclick="$('${out.id}_r').focus()">Modifier</button><button class="btn" onclick="$('${btn.id}').click()">Régénérer</button><button class="btn p" onclick="saveT('${out.id}_r','${cat}','${esc(meta)}')">Enregistrer</button></div><p class="mu">Texte modifiable ci-dessus. Générations aujourd’hui : ${q.n}/${LIM.free_text_per_day}.</p>`;
-  }catch(e){msg.hidden=false;msg.textContent=e&&e.code==='not_granted'?'Autorisation refusée : acceptez la demande pour utiliser l’IA.':e&&e.code==='rate_limited'?'Trop de requêtes, patientez un instant.':'Échec de la génération (aucun quota décompté). Réessayez.'}
+    out.innerHTML=`<div class="res" id="${out.id}_r" contenteditable="true">${esc(r.text)}</div><div class="row"><button class="btn" onclick="cp('${out.id}_r')">Copier</button><button class="btn" onclick="$('${out.id}_r').focus()">Modifier</button><button class="btn" onclick="$('${btn.id}').click()">Régénérer</button><button class="btn p" onclick="saveT('${out.id}_r','${cat}','${esc(meta)}')">Enregistrer</button></div><p class="mu">Texte modifiable ci-dessus. Générations aujourd’hui : ${r.used!=null?r.used+'/'+r.limit:q.n+'/'+LIM.free_text_per_day}.</p>`;
+  }catch(e){msg.hidden=false;msg.textContent=e&&e.code==='auth'?'Connectez-vous dans l’onglet Compte pour utiliser l’IA.':e&&e.code==='quota'?e.message:e&&e.code==='not_granted'?'Autorisation refusée : acceptez la demande pour utiliser l’IA.':e&&e.code==='rate_limited'?'Trop de requêtes, patientez un instant.':'Échec de la génération (aucun quota décompté). Réessayez.'}
   btn.disabled=false;btn.textContent='Générer'}
 function genT(){const v=i=>$(i).value.trim();if(!v('t_act')||!v('t_prod')){alert('Renseignez au moins l’activité et le produit.');return}
  run($('t_go'),$('t_msg'),$('t_out'),`Tu es rédacteur publicitaire. Langue : ${v('t_lang')}. Ton : ${v('t_ton')}. Réseau : ${$('t_net').value}.
@@ -173,6 +178,14 @@ function delB(id){if(confirm('Supprimer ce projet ?')){S.set('klib',lib().filter
 function copyB(id){navigator.clipboard&&navigator.clipboard.writeText(gb(id).data).then(()=>alert('Copié.')).catch(()=>alert('Copie impossible.'))}
 async function dlB(id){const d=await useDl();try{await d.save({filename:'creation-kreatify.txt',data:new Blob([gb(id).data],{type:'text/plain'})})}catch(e){}}
 function openB(id){const o=JSON.parse(gb(id).data);for(const[k,i]of Object.entries({co:'a_co',pr:'a_pr',px:'a_px',de:'a_de',c1:'a_c1',c2:'a_c2',st:'a_st',fm:'a_fm'}))$(i).value=o[k];go('affiches');drawA();alert('Projet repris. L’image produit doit être rechargée.')}
+let ME=null;
+async function api(path,body){const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Erreur');return j}
+function accMsg(t){const m=$('acc_msg');m.hidden=!t;m.textContent=t||''}
+async function refreshMe(){try{ME=await api('/api/me')}catch(e){ME=null}$('acc_in').hidden=!ME;$('acc_form').hidden=!!ME;if(ME){$('acc_mail').textContent=ME.email;$('acc_use').textContent='Générations IA aujourd’hui : '+ME.used+'/'+ME.limit}}
+async function doAuth(k){accMsg('');try{await api('/api/'+k,{email:$('acc_e').value,password:$('acc_p').value});$('acc_p').value='';await refreshMe()}catch(e){accMsg(e.message==='Failed to fetch'||e instanceof SyntaxError?'Comptes indisponibles sur cette version.':e.message)}}
+async function doLogout(){try{await api('/api/logout',{})}catch(e){}await refreshMe()}
+async function doDelete(){if(!confirm('Supprimer définitivement votre compte ?'))return;accMsg('');try{await api('/api/delete-account',{password:$('acc_del').value});$('acc_del').value='';await refreshMe();accMsg('Compte supprimé.')}catch(e){accMsg(e.message)}}
+refreshMe();
 go(location.hash.slice(1)||'accueil');
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script></body></html>
